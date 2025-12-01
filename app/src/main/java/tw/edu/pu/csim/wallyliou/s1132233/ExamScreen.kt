@@ -1,6 +1,6 @@
 package tw.edu.pu.csim.wallyliou.s1132233
 
-import android.graphics.Rect // 重點：必須加入這個 import
+import android.graphics.Rect
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -39,9 +39,7 @@ fun ExamScreen(
     val fallingIconSizePx = 200f
     val fallingIconSizeDp = with(density) { fallingIconSizePx.toDp() }
 
-    // --- 2. 建立四個角色的碰撞矩形 (Rect) ---
-    // Rect(left, top, right, bottom)
-    // 因為角色位置是固定的，所以可以先定義好
+    // --- 2. 建立四個角色的碰撞矩形 ---
     val role0Rect = Rect(0, (middleY - cornerIconSizePx).toInt(), cornerIconSizePx.toInt(), middleY.toInt())
     val role1Rect = Rect((screenWidth - cornerIconSizePx).toInt(), (middleY - cornerIconSizePx).toInt(), screenWidth.toInt(), middleY.toInt())
     val role2Rect = Rect(0, (screenHeight - cornerIconSizePx).toInt(), cornerIconSizePx.toInt(), screenHeight.toInt())
@@ -58,7 +56,6 @@ fun ExamScreen(
     var serviceX by remember { mutableFloatStateOf((screenWidth - fallingIconSizePx) / 2) }
     var serviceY by remember { mutableFloatStateOf(0f) }
 
-    // [新增] 顯示碰撞訊息的變數
     var msg by remember { mutableStateOf("") }
 
     // --- 4. 動畫與碰撞偵測迴圈 ---
@@ -75,78 +72,57 @@ fun ExamScreen(
                 (serviceY + fallingIconSizePx).toInt()
             )
 
-            // B. 進行碰撞判斷 (Intersects)
+            // B. 進行碰撞判斷
+            // 為了程式碼簡潔，我們用一個變數 isHit 來標記是否發生碰撞
+            var isHit = false
+
             if (Rect.intersects(serviceRect, role0Rect)) {
                 msg = "(碰撞嬰幼兒圖示)"
+                isHit = true
             } else if (Rect.intersects(serviceRect, role1Rect)) {
                 msg = "(碰撞兒童圖示)"
+                isHit = true
             } else if (Rect.intersects(serviceRect, role2Rect)) {
                 msg = "(碰撞成人圖示)"
+                isHit = true
             } else if (Rect.intersects(serviceRect, role3Rect)) {
                 msg = "(碰撞一般民眾圖示)"
+                isHit = true
             }
 
-            // C. 判斷是否掉到螢幕下方
+            // C. 如果發生碰撞，立刻重置 (這就是您要的功能)
+            if (isHit) {
+                serviceY = 0f // 回到最上方
+                serviceX = (screenWidth - fallingIconSizePx) / 2 // 回到水平中間
+                currentServiceImage = serviceImages.random() // 換一張圖
+            }
+
+            // D. 判斷是否掉到螢幕下方 (沒接到)
             if (serviceY > screenHeight) {
-                serviceY = 0f // 重置回上方
-                serviceX = (screenWidth - fallingIconSizePx) / 2 // 重置回中間
-                currentServiceImage = serviceImages.random() // 換圖
-                msg = "(掉到最下方)" // 更新訊息
+                msg = "(掉到最下方)"
+                serviceY = 0f
+                serviceX = (screenWidth - fallingIconSizePx) / 2
+                currentServiceImage = serviceImages.random()
             }
         }
     }
 
-    // --- 5. 畫面佈局 ---
+    // --- 5. 畫面佈局 (保持不變) ---
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Yellow)
     ) {
         // --- 角落角色圖示 ---
-        Image(
-            painter = painterResource(id = R.drawable.role0),
-            contentDescription = "嬰幼兒",
-            modifier = Modifier
-                .size(cornerIconSizeDp)
-                .offset { IntOffset(0, (middleY - cornerIconSizePx).toInt()) }
-        )
-        Image(
-            painter = painterResource(id = R.drawable.role1),
-            contentDescription = "兒童",
-            modifier = Modifier
-                .size(cornerIconSizeDp)
-                .offset { IntOffset((screenWidth - cornerIconSizePx).toInt(), (middleY - cornerIconSizePx).toInt()) }
-        )
-        Image(
-            painter = painterResource(id = R.drawable.role2),
-            contentDescription = "成人",
-            modifier = Modifier
-                .size(cornerIconSizeDp)
-                .align(Alignment.BottomStart)
-        )
-        Image(
-            painter = painterResource(id = R.drawable.role3),
-            contentDescription = "一般民眾",
-            modifier = Modifier
-                .size(cornerIconSizeDp)
-                .align(Alignment.BottomEnd)
-        )
+        Image(painter = painterResource(id = R.drawable.role0), contentDescription = "嬰幼兒", modifier = Modifier.size(cornerIconSizeDp).offset { IntOffset(0, (middleY - cornerIconSizePx).toInt()) })
+        Image(painter = painterResource(id = R.drawable.role1), contentDescription = "兒童", modifier = Modifier.size(cornerIconSizeDp).offset { IntOffset((screenWidth - cornerIconSizePx).toInt(), (middleY - cornerIconSizePx).toInt()) })
+        Image(painter = painterResource(id = R.drawable.role2), contentDescription = "成人", modifier = Modifier.size(cornerIconSizeDp).align(Alignment.BottomStart))
+        Image(painter = painterResource(id = R.drawable.role3), contentDescription = "一般民眾", modifier = Modifier.size(cornerIconSizeDp).align(Alignment.BottomEnd))
 
         // --- 中間文字區塊 ---
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.happy),
-                    contentDescription = "Logo",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(200.dp).clip(CircleShape)
-                )
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                Image(painter = painterResource(id = R.drawable.happy), contentDescription = "Logo", contentScale = ContentScale.Crop, modifier = Modifier.size(200.dp).clip(CircleShape))
                 Spacer(modifier = Modifier.height(20.dp))
                 Text("瑪利亞基金會服務大考驗", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black)
                 Spacer(modifier = Modifier.height(10.dp))
@@ -155,7 +131,7 @@ fun ExamScreen(
                 Text("螢幕大小：$screenWidth * $screenHeight", fontSize = 16.sp, color = Color.Black)
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // [修改] 顯示成績與碰撞訊息
+                // 顯示訊息
                 Text(
                     text = "成績：${viewModel.score}分 $msg",
                     fontSize = 16.sp,
