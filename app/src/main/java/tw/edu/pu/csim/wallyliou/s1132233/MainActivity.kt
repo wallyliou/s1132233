@@ -1,6 +1,6 @@
 package tw.edu.pu.csim.wallyliou.s1132233
 
-import ExamScreen
+
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
